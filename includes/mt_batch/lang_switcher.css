@@ -1,0 +1,52 @@
+#activeloc-dropdown > div {
+  cursor: pointer;
+}
+
+#activeloc-options {
+  display: none;
+  padding: 0px;
+  right: 4px;
+  list-style: none;
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  margin: 0;
+  z-index: 999;
+}
+
+#activeloc-options.show {
+  display: block !important;
+  margin-right: -8px;
+  margin-top: -8px;
+}
+
+#activeloc-options li {
+  padding: 4px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  background-color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#activeloc-options li:hover {
+  background-color: rgba(131, 131, 222, 0.438);
+}
+
+.lang-name {
+  font-size: 10px;
+}
+
+#dropdown-items {
+  margin-right: 0px;
+}
+
+#activeloc-current-flag {
+  color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+}
