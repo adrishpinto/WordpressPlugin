@@ -49,7 +49,7 @@ function translate_and_make_post($post, $target_lang, $replace_if_exists = false
         'post_content' => $translated_content,
         'post_status'  => $should_publish ? 'publish' : 'draft',
         'post_type'    => $post->post_type,
-        'post_parent'  => $post->post_parent,
+        // 'post_parent'  => $post->post_parent,
     ];
 
     $new_post_id = wp_insert_post($new_post);

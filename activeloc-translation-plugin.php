@@ -188,6 +188,12 @@ function activeloc_enable_categories_for_pages()
 }
 add_action('init', 'activeloc_enable_categories_for_pages');
 
+
+
+#-------------------------
+### ROUTING RULES FROM HERE
+#-------------------------
+
 function activeloc_register_query_vars($vars)
 {
     $vars[] = 'lang';
@@ -195,60 +201,57 @@ function activeloc_register_query_vars($vars)
 }
 add_filter('query_vars', 'activeloc_register_query_vars');
 
+//pagename used for pages
+//name used for posts
 function activeloc_language_rewrite_rules()
 {
     global $lang_array;
 
     foreach ($lang_array as $lang) {
-        // Rule for pages with hierarchical structure (must come first)
+        // Hierarchical pages 
         add_rewrite_rule(
-            $lang . '/page/(.+)/?$',
+            $lang . '/(.+)/?$',
             'index.php?pagename=$matches[1]&lang=' . $lang,
             'top'
         );
 
-        // Rule for single pages (non-hierarchical)
-        add_rewrite_rule(
-            $lang . '/page/([^/]+)/?$',
-            'index.php?pagename=$matches[1]&lang=' . $lang,
-            'top'
-        );
-
-        // Rule for posts and custom post types
+        // Single posts / custom post types
         add_rewrite_rule(
             $lang . '/([^/]+)/?$',
             'index.php?name=$matches[1]&lang=' . $lang,
             'top'
         );
 
-        error_log("REWRITE: Added rules for language '$lang'");
+        // error_log("REWRITE: Added rules for language '$lang'");
     }
 }
 add_action('init', 'activeloc_language_rewrite_rules');
 
+
+
+//which post/page to load
 function activeloc_filter_language_query($query)
 {
     if (!is_admin() && $query->is_main_query()) {
         $lang = get_query_var('lang');
         $slug = get_query_var('pagename') ?: get_query_var('name');
+        error_log("slug=" . $slug);
+        error_log("lang=" . $lang);
 
         if ($lang && $slug) {
             error_log("QUERY: Requested slug='$slug' with lang='$lang'");
 
-            // Try to find the post/page by slug
             $post_types = get_post_types(['public' => true]);
             $original_post = null;
 
-            // First try as page
             if (get_query_var('pagename')) {
                 $original_post = get_page_by_path($slug, OBJECT, 'page');
-                error_log("QUERY: Searching for page with slug='$slug'");
+                error_log("QUERY: Searching for page with pagename slug='$slug'");
             }
 
-            // If not found as page, try other post types
             if (!$original_post) {
                 $original_post = get_page_by_path($slug, OBJECT, $post_types);
-                error_log("QUERY: Searching for post with slug='$slug'");
+                error_log("QUERY: Searching for post with original_post slug='$slug'");
             }
 
             if ($original_post) {
@@ -273,7 +276,6 @@ function activeloc_filter_language_query($query)
 
                 set_query_var('translated_id', $translated_id);
 
-                // Set the correct query vars based on post type
                 $translated_post = get_post($translated_id);
                 if ($translated_post) {
                     if ($translated_post->post_type === 'page') {
@@ -294,7 +296,8 @@ function activeloc_filter_language_query($query)
 }
 add_action('pre_get_posts', 'activeloc_filter_language_query');
 
-// Force posts replacement - THIS HOOK WAS MISSING!
+
+// from previous post/page load the right post/page 
 function activeloc_force_translated_post($posts, $query)
 {
     if (!is_admin() && $query->is_main_query()) {
@@ -341,7 +344,36 @@ function activeloc_force_translated_post($posts, $query)
 
     return $posts;
 }
-add_filter('posts_results', 'activeloc_force_translated_post', 10, 2); // THIS WAS MISSING!
+add_filter('posts_results', 'activeloc_force_translated_post', 10, 2);
+
+add_action('save_post', 'log_post_creation_details', 10, 3);
+
+
+function log_post_creation_details($post_id, $post, $update)
+{
+    // Skip revisions or autosaves
+    if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) {
+        return;
+    }
+
+    // Post details
+    $title = get_the_title($post_id);
+    $slug = $post->post_name;
+    $permalink = get_permalink($post_id);
+    $post_type = $post->post_type;
+    $status = $post->post_status;
+    $parent = $post->post_parent;
+
+    error_log("[Post Logger] Post created/updated:");
+    error_log("  ID: $post_id");
+    error_log("  Title: $title");
+    error_log("  Slug: $slug");
+    error_log("  Permalink: $permalink");
+    error_log("  Post Type: $post_type");
+    error_log("  Status: $status");
+    error_log("  Parent ID: $parent");
+}
+
 
 function activeloc_disable_canonical_redirect($redirect_url)
 {
@@ -352,31 +384,42 @@ function activeloc_disable_canonical_redirect($redirect_url)
 }
 add_filter('redirect_canonical', 'activeloc_disable_canonical_redirect');
 
+
 function activeloc_prepend_lang_to_permalink($url, $post, $leavename)
 {
     global $lang_array;
+
+    if (is_admin()) {
+        return $url;
+    }
 
     if (is_numeric($post)) {
         $post = get_post($post);
     }
 
-    $lang = $_COOKIE['activeloc_lang'] ?? 'en';
     $post_id = $post ? $post->ID : 'unknown';
+
+
+    $original_id = $post ? get_post_meta($post->ID, '_original_id', true) : '';
+
+
+    $lang = (!$original_id) ? 'en' : ($_COOKIE['activeloc_lang'] ?? 'en');
 
     if ($lang && in_array($lang, $lang_array) && $post) {
         $url_path = parse_url($url, PHP_URL_PATH);
         $url = home_url("/$lang$url_path");
-
-        error_log("PERMALINK: Post ID=$post_id, lang='$lang' → rewritten URL=$url");
     } else {
         error_log("PERMALINK: Skipped for Post ID=$post_id, lang='$lang'");
     }
 
     return $url;
 }
+
+
 add_filter('post_link', 'activeloc_prepend_lang_to_permalink', 10, 3);
 add_filter('page_link', 'activeloc_prepend_lang_to_permalink', 10, 3);
 add_filter('post_type_link', 'activeloc_prepend_lang_to_permalink', 10, 3);
+
 add_action('admin_post_mtpe_download_file', 'mtpe_download_file');
 add_action('admin_post_mtpe_import_file', 'mtpe_import_file');
 

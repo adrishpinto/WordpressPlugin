@@ -76,6 +76,15 @@ function mtpe_import_folder_draft()
         update_post_meta($new_post_id, 'activeloc_lang', $target_lang);
         update_post_meta($new_post_id, '_original_post_id', $original_post_id);
 
+        // --- Update translations array on original post ---
+        $translations = get_post_meta($original_post_id, 'activeloc_translations', true);
+        if (!is_array($translations)) {
+            $translations = [];
+        }
+        $translations[$target_lang] = $new_post_id;
+        update_post_meta($original_post_id, 'activeloc_translations', $translations);
+
+
         // Assign categories: remove Uncategorized, add language category
         $uncat_id = get_cat_ID('Uncategorized');
         $cats = wp_get_post_categories($new_post_id);

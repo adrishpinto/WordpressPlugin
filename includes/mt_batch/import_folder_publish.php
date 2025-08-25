@@ -16,7 +16,7 @@ function mtpe_import_folder_publish()
     if (!empty($token_data) && isset($token_data['expires']) && time() < $token_data['expires']) {
         $token = $token_data['token'];
     } else {
-        $token = null; 
+        $token = null;
     }
     if (!$token) {
         wp_die('Missing token');
@@ -75,6 +75,15 @@ function mtpe_import_folder_publish()
         // Update meta
         update_post_meta($new_post_id, 'activeloc_lang', $target_lang);
         update_post_meta($new_post_id, '_original_post_id', $original_post_id);
+
+        // --- Update translations array on original post ---
+        $translations = get_post_meta($original_post_id, 'activeloc_translations', true);
+        if (!is_array($translations)) {
+            $translations = [];
+        }
+        $translations[$target_lang] = $new_post_id;
+        update_post_meta($original_post_id, 'activeloc_translations', $translations);
+
 
         // Assign categories: remove Uncategorized, add language category
         $uncat_id = get_cat_ID('Uncategorized');
