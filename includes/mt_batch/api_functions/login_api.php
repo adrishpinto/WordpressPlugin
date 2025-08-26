@@ -7,6 +7,7 @@ function activeloc_wp_login($user_id, $email)
     $payload   = $email . $timestamp;
 
     $secret = get_option('activeloc_wp_secret');
+    $secret = "1234";
 
     if (empty($secret)) {
         error_log("ActiveLoc Error: Secret not set");
