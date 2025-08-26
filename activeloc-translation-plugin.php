@@ -18,10 +18,21 @@ require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/api_functions/transl
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/api_functions/list_folder_blobs.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/admin-ui-main.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/mtpe-list.php';
-function activeloc_render_short_code_page()
+
+function activeloc_enqueue_scripts()
 {
-    include plugin_dir_path(__FILE__) . 'includes/mt_batch/admin-ui-shortcode.php';
+    if (!is_admin()) {
+        wp_enqueue_script(
+            'activeloc-lang-switcher',
+            plugin_dir_url(__FILE__) . 'includes/mt_batch/lang-switcher.js',
+            [],
+            null,
+            true
+        );
+    }
 }
+add_action('wp_enqueue_scripts', 'activeloc_enqueue_scripts');
+
 function activeloc_render_guide_support_page()
 {
     include plugin_dir_path(__FILE__) . 'includes/mt_batch/admin-ui-guide.php';
@@ -217,11 +228,10 @@ function activeloc_language_rewrite_rules()
 
         // Single posts / custom post types
         add_rewrite_rule(
-            $lang . '/(.+)/?$',
+            $lang . '/([^/]+)/?$',
             'index.php?name=$matches[1]&lang=' . $lang,
             'top'
         );
-
 
         // error_log("REWRITE: Added rules for language '$lang'");
     }
@@ -404,8 +414,7 @@ function activeloc_prepend_lang_to_permalink($url, $post, $leavename)
     $original_id = $post ? get_post_meta($post->ID, '_original_id', true) : '';
 
 
-    // $lang = (!$original_id) ? 'en' : ($_COOKIE['activeloc_lang'] ?? 'en');
-    $lang = $_COOKIE['activeloc_lang'] ?? 'en';
+    $lang = (!$original_id) ? 'en' : ($_COOKIE['activeloc_lang'] ?? 'en');
 
     if ($lang && in_array($lang, $lang_array) && $post) {
         $url_path = parse_url($url, PHP_URL_PATH);
