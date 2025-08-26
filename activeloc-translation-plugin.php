@@ -228,7 +228,7 @@ function activeloc_language_rewrite_rules()
 
         // Single posts / custom post types
         add_rewrite_rule(
-            $lang . '/([^/]+)/?$',
+            $lang . '/(.+)/?$',
             'index.php?name=$matches[1]&lang=' . $lang,
             'top'
         );
@@ -263,6 +263,14 @@ function activeloc_filter_language_query($query)
             if (!$original_post) {
                 $original_post = get_page_by_path($slug, OBJECT, $post_types);
                 error_log("QUERY: Searching for post with original_post slug='$slug'");
+            }
+
+            // this is for matching custom post permalink by taking last part of post
+            if (!$original_post) {
+                $segments = explode('/', $slug);
+                $last_slug = end($segments);
+                $original_post = get_page_by_path($last_slug, OBJECT, $post_types);
+                error_log("QUERY: Fallback using last slug segment='$last_slug'");
             }
 
             if ($original_post) {

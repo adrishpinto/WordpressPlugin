@@ -149,7 +149,7 @@ add_shortcode('activeloc_lang_switcher', function ($atts) {
     echo '</div>';
 
     // JS: toggle + cookie
-    
+
 
     return ob_get_clean();
 });
