@@ -217,10 +217,11 @@ function activeloc_language_rewrite_rules()
 
         // Single posts / custom post types
         add_rewrite_rule(
-            $lang . '/([^/]+)/?$',
+            $lang . '/(.+)/?$',
             'index.php?name=$matches[1]&lang=' . $lang,
             'top'
         );
+
 
         // error_log("REWRITE: Added rules for language '$lang'");
     }
@@ -403,7 +404,8 @@ function activeloc_prepend_lang_to_permalink($url, $post, $leavename)
     $original_id = $post ? get_post_meta($post->ID, '_original_id', true) : '';
 
 
-    $lang = (!$original_id) ? 'en' : ($_COOKIE['activeloc_lang'] ?? 'en');
+    // $lang = (!$original_id) ? 'en' : ($_COOKIE['activeloc_lang'] ?? 'en');
+    $lang = $_COOKIE['activeloc_lang'] ?? 'en';
 
     if ($lang && in_array($lang, $lang_array) && $post) {
         $url_path = parse_url($url, PHP_URL_PATH);
