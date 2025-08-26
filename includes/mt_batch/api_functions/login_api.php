@@ -4,22 +4,29 @@ function activeloc_wp_login($user_id, $email)
     $url = ENDPOINT . 'wordpress_customer_login';
 
     $timestamp = time();
-    $payload = $email . $timestamp;
-    $secret = MT_GLOBAL_SECRET;
+    $payload   = $email . $timestamp;
+
+    $secret = get_option('activeloc_wp_secret');
+
+    if (empty($secret)) {
+        error_log("ActiveLoc Error: Secret not set");
+        return ['error' => 'Secret not configured'];
+    }
+
     $signature = hash_hmac('sha256', $payload, $secret);
 
     $headers = [
-        'Content-Type' => 'application/json',
-        'X-Plugin-Email' => $email,
-        'X-Plugin-Timestamp' => $timestamp,
-        'X-Plugin-Signature' => $signature,
+        'Content-Type'      => 'application/json',
+        'X-Plugin-Email'    => $email,
+        'X-Plugin-Timestamp'=> $timestamp,
+        'X-Plugin-Signature'=> $signature,
     ];
 
     $body = json_encode(['email' => $email]);
 
     $response = wp_remote_post($url, [
         'headers' => $headers,
-        'body' => $body,
+        'body'    => $body,
         'timeout' => 10,
     ]);
 
@@ -39,17 +46,18 @@ function activeloc_wp_login($user_id, $email)
     error_log("Response Code: $code");
     error_log("Response Body: " . print_r($body, true));
 
-    // Store token with 10-second expiration
+    // Store token with 24-hour expiration
     if ($code === 200 && !empty($body['token'])) {
         $expiration = time() + 24 * 60 * 60;
         update_user_meta($user_id, 'activeloc_token', [
-            'token' => $body['token'],
+            'token'   => $body['token'],
             'expires' => $expiration,
         ]);
     }
 
     return ($code === 200) ? $body : ['error' => $body['error'] ?? 'Unknown error'];
 }
+
 
 // Example of checking token later
 function get_activeloc_token($user_id)
