@@ -16,8 +16,10 @@ require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/api_functions/login_
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/api_functions/translate.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/api_functions/translate_title.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/api_functions/list_folder_blobs.php';
+
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/admin-ui-main.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/mtpe-list.php';
+require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/admin-ui-shortcode.php';
 
 function activeloc_enqueue_scripts()
 {
@@ -42,10 +44,12 @@ function activeloc_render_guide_support_page()
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/import_file.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/lang-utils.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/lang-switcher-shortcode.php';
+
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/download_folder_handler.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/import_folder_draft.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/import_folder_publish.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/api_functions/download_status_file.php';
+
 
 
 // download and import mtpe actions
@@ -62,19 +66,6 @@ function enqueue_toastify()
 }
 add_action('wp_enqueue_scripts', 'enqueue_toastify');
 
-
-add_action('wp_enqueue_scripts', function () {
-    if (is_admin()) return;
-
-    $plugin_url = plugin_dir_url(__FILE__);
-    wp_enqueue_script(
-        'activeloc-lang-switcher',
-        $plugin_url . 'includes/mt_batch/lang_switcher.js',
-        [],
-        null,
-        true
-    );
-});
 
 // VIEW FILE LIST START
 add_action('wp_ajax_mtpe_get_folder_files', 'mtpe_get_folder_files');
@@ -147,10 +138,101 @@ function mtpe_get_status_file()
 
 
 
+$lang_array = [
+    "af",
+    "sq",
+    "ar",
+    "az",
+    "ba",
+    "eu",
+    "bs",
+    "bg",
+    "yue",
+    "ca",
+    "lzh",
+    "zh-Hans",
+    "zh-Hant",
+    "hr",
+    "cs",
+    "da",
+    "nl",
+    "en",
+    "et",
+    "fo",
+    "fj",
+    "fil",
+    "fi",
+    "fr",
+    "fr-ca",
+    "gl",
+    "de",
+    "ht",
+    "hi",
+    "mww",
+    "hu",
+    "is",
+    "id",
+    "ia",
+    "ikt",
+    "iu-Latn",
+    "ga",
+    "it",
+    "ja",
+    "kn",
+    "kk",
+    "kk-cyrl",
+    "kk-latn",
+    "ko",
+    "ku-latn",
+    "kmr",
+    "ky",
+    "lv",
+    "lt",
+    "mk",
+    "mg",
+    "ms",
+    "ml",
+    "mt",
+    "mi",
+    "mr",
+    "mn-Cyrl",
+    "ne",
+    "nb",
+    "pl",
+    "pt",
+    "pt-br",
+    "pt-pt",
+    "pa",
+    "otq",
+    "ro",
+    "ru",
+    "sm",
+    "sr-Cyrl",
+    "sr",
+    "sr-latn",
+    "sk",
+    "sl",
+    "so",
+    "es",
+    "sw",
+    "sv",
+    "ty",
+    "ta",
+    "tt",
+    "te",
+    "to",
+    "tr",
+    "tk",
+    "uk",
+    "hsb",
+    "uz",
+    "vi",
+    "cy",
+    "yua",
+    "zu"
+];
 
 
-
-$lang_array = ['fr', 'es', 'de', 'it', 'kn', 'en'];
 
 add_action('admin_post_mtpe_view_file_list', 'mtpe_view_file_list_handler');
 
@@ -191,6 +273,19 @@ add_action('wp_enqueue_scripts', function () {
         );
     }
 });
+
+add_action('admin_enqueue_scripts', function ($hook) {
+    // Only load CSS on our plugin's admin pages
+    if (isset($_GET['page']) && strpos($_GET['page'], 'activeloc-') === 0) {
+        wp_enqueue_style(
+            'activeloc-admin-styles',
+            plugin_dir_url(__FILE__) . 'includes/mt_batch/wp_admin.css',
+            [],
+            '1.0'
+        );
+    }
+});
+
 
 // Enables category support for WordPress pages
 function activeloc_enable_categories_for_pages()
@@ -422,7 +517,7 @@ function activeloc_prepend_lang_to_permalink($url, $post, $leavename)
     $original_id = $post ? get_post_meta($post->ID, '_original_id', true) : '';
 
 
-    $lang = (!$original_id) ? 'en' : ($_COOKIE['activeloc_lang'] ?? 'en');
+    $lang = $_COOKIE['activeloc_lang'] ?? 'en';
 
     if ($lang && in_array($lang, $lang_array) && $post) {
         $url_path = parse_url($url, PHP_URL_PATH);

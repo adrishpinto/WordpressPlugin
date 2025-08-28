@@ -1,0 +1,15 @@
+.red {
+  color: red !important;
+}
+
+.language-checkboxes {
+  columns: 3; /* number of vertical columns */
+  column-gap: 20px; /* space between columns */
+
+  overflow-y: auto;
+}
+
+.language-checkboxes label {
+  display: block; /* ensures each label is on its own line */
+  margin-bottom: 8px;
+}
