@@ -12,14 +12,70 @@ define('ENDPOINT', 'https://api.activeloc.com/');
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
+require_once __DIR__ . '/vendor/autoload.php';
+
+require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/admin-ui-string.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/api_functions/login_api.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/api_functions/translate.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/api_functions/translate_title.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/api_functions/list_folder_blobs.php';
 
+
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/admin-ui-main.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/mtpe-list.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/admin-ui-shortcode.php';
+
+add_action('admin_menu', function () {
+    add_menu_page(
+        'ActiveLoc Translator Page',
+        'ActiveLoc Translator',
+        'edit_others_posts',
+        'activeloc-translator',
+        'activeloc_render_translator_page',
+        'dashicons-translation',
+        99
+    );
+
+    add_submenu_page(
+        'activeloc-translator',
+        'MTPE Completed List',
+        'MTPE Completed List',
+        'edit_others_posts',
+        'activeloc-mtpe-list',
+        'activeloc_render_mtpe_list_page'
+    );
+
+    // New Short Code submenu
+    add_submenu_page(
+        'activeloc-translator',
+        'Short Code',
+        'Short Code',
+        'edit_others_posts',
+        'activeloc-short-code',
+        'activeloc_render_short_code_page'
+    );
+
+    // Guide and Support submenu
+    add_submenu_page(
+        'activeloc-translator',
+        'Guide and Support',
+        'Guide and Support',
+        'edit_others_posts',
+        'activeloc-guide-support',
+        'activeloc_render_guide_support_page'
+    );
+
+    // String Translator submenu
+    add_submenu_page(
+        'activeloc-translator',
+        'String Translator',
+        'String Translator',
+        'edit_others_posts',
+        'activeloc-string-translator',
+        'activeloc_render_string_translator_page'
+    );
+});
+
 
 function activeloc_enqueue_scripts()
 {
@@ -232,6 +288,65 @@ $lang_array = [
     "zu"
 ];
 
+//loco translate
+require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/loco-mtpe-ui.php';
+require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/api_functions/loco_mtpe.php';
+
+add_filter('loco_api_providers', function ($providers) {
+    $providers[] = [
+        'id'   => 'azure_simple',
+        'name' => 'Azure Wrapper',
+        'url'  => 'https://your-api-endpoint.com/translate',
+        'key'  => 'dummy',
+    ];
+    return $providers;
+});
+
+
+
+// Hook provider logic
+add_filter('loco_api_translate_azure_simple', function ($translation, $text, $locale, $args) {
+    $to_lang = substr($locale, 0, 2);
+    error_log("AzureSimple Text: " . $text);
+
+    $response = wp_remote_post('https://api.activeloc.com/translate_text_loco', [
+        'headers' => [
+            'Content-Type' => 'application/json',
+        ],
+        'body' => wp_json_encode([
+            'text' => $text,
+            'to'   => $to_lang,
+        ]),
+        'timeout' => 20,
+    ]);
+
+
+    if (is_wp_error($response)) {
+        error_log("AzureSimple WP_Error: " . $response->get_error_message());
+        return $translation ?: $text;
+    }
+
+    $body = wp_remote_retrieve_body($response);
+    $data = json_decode($body, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        error_log("AzureSimple JSON decode error: " . json_last_error_msg() . " | Raw: " . $body);
+        return $translation ?: $text;
+    }
+
+    if (!isset($data['translated'])) {
+        error_log("AzureSimple API error: " . $body);
+        return $translation ?: $text;
+    }
+
+    return $data['translated'];
+}, 10, 4);
+
+
+// ------------------
+// loco translate END
+//-------------------
+
 
 
 add_action('admin_post_mtpe_view_file_list', 'mtpe_view_file_list_handler');
@@ -285,6 +400,129 @@ add_action('admin_enqueue_scripts', function ($hook) {
         );
     }
 });
+
+// plugin/theme lang setter 
+add_action('after_setup_theme', function () {
+    if (!is_admin() && isset($_COOKIE['activeloc_lang'])) {
+        $activeloc_lang = sanitize_text_field($_COOKIE['activeloc_lang']);
+        error_log("Activeloc cookie value: " . $activeloc_lang);
+
+        // ActiveLoc -> WordPress locale mapping
+        $locale_map = array(
+            'af' => 'af',
+            'sq' => 'sq',
+            'am' => 'am',
+            'ar' => 'ar',
+            'hy' => 'hy',
+            'as' => 'as',
+            'az' => 'az',
+            'bn' => 'bn_BD',
+            'ba' => 'ba',
+            'eu' => 'eu',
+            'bho' => 'bho',
+            'brx' => 'brx',
+            'bs' => 'bs_BA',
+            'bg' => 'bg_BG',
+            'ca' => 'ca',
+            'zh-Hans' => 'zh_CN',
+            'hr' => 'hr',
+            'cs' => 'cs_CZ',
+            'da' => 'da_DK',
+            'dv' => 'dv',
+            'nl' => 'nl_NL',
+            'en' => 'en_US',
+            'et' => 'et',
+            'fo' => 'fo',
+            'fi' => 'fi',
+            'fr' => 'fr_FR',
+            'fr-ca' => 'fr_CA',
+            'gl' => 'gl_ES',
+            'ka' => 'ka_GE',
+            'de' => 'de_DE',
+            'el' => 'el',
+            'gu' => 'gu_IN',
+            'ht' => 'hat',
+            'ha' => 'hau',
+            'he' => 'he_IL',
+            'hi' => 'hi_IN',
+            'hu' => 'hu_HU',
+            'is' => 'is_IS',
+            'ig' => 'ibo',
+            'id' => 'id_ID',
+            'ga' => 'ga',
+            'it' => 'it_IT',
+            'ja' => 'ja',
+            'kn' => 'kn',
+            'kk' => 'kk',
+            'km' => 'km',
+            'rw' => 'kin',
+            'ko' => 'ko_KR',
+            'ku' => 'ckb',
+            'kmr' => 'kmr',
+            'ky' => 'ky_KY',
+            'lo' => 'lo',
+            'lv' => 'lv',
+            'lt' => 'lt_LT',
+            'ln' => 'lin',
+            'dsb' => 'dsb',
+            'lug' => 'lug',
+            'mk' => 'mk_MK',
+            'mai' => 'mai',
+            'mg' => 'mg_MG',
+            'ms' => 'ms_MY',
+            'ml' => 'ml',
+            'mt' => 'mlt',
+            'mi' => 'mri',
+            'mr' => 'mr',
+            'mn-Cyrl' => 'mn',
+            'my' => 'my_MM',
+            'ne' => 'ne_NP',
+            'nb' => 'nb_NO',
+            'ps' => 'ps',
+            'fa' => 'fa_IR',
+            'pl' => 'pl_PL',
+            'pt' => 'pt_BR',
+            'pt-pt' => 'pt_PT',
+            'pa' => 'pa_IN',
+            'ro' => 'ro_RO',
+            'ru' => 'ru_RU',
+            'sr-Cyrl' => 'sr_RS',
+            'sd' => 'sd_PK',
+            'si' => 'si_LK',
+            'sk' => 'sk_SK',
+            'sl' => 'sl_SL',
+            'so' => 'so_SO',
+            'es' => 'es_ES',
+            'sw' => 'sw',
+            'sv' => 'sv_SE',
+            'ty' => 'tah',
+            'ta' => 'ta_IN',
+            'tt' => 'tt_RU',
+            'te' => 'te',
+            'th' => 'th',
+            'bo' => 'bo',
+            'ti' => 'tir',
+            'tr' => 'tr_TR',
+            'tk' => 'tuk',
+            'uk' => 'uk',
+            'hsb' => 'hsb',
+            'ur' => 'ur',
+            'uz' => 'uz_UZ',
+            'vi' => 'vi',
+            'cy' => 'cy',
+            'xh' => 'xho',
+            'yo' => 'yor',
+            'zu' => 'zul',
+        );
+
+        // Map and switch
+        $wp_locale = isset($locale_map[$activeloc_lang]) ? $locale_map[$activeloc_lang] : get_locale();
+        error_log("Mapped WordPress locale: " . $wp_locale);
+        error_log("Final locale after switch_to_locale: " . get_locale());
+        switch_to_locale($wp_locale);
+    }
+});
+
 
 
 // Enables category support for WordPress pages
@@ -341,23 +579,23 @@ function activeloc_filter_language_query($query)
     if (!is_admin() && $query->is_main_query()) {
         $lang = get_query_var('lang');
         $slug = get_query_var('pagename') ?: get_query_var('name');
-        error_log("slug=" . $slug);
-        error_log("lang=" . $lang);
+        // error_log("slug=" . $slug);
+        // error_log("lang=" . $lang);
 
         if ($lang && $slug) {
-            error_log("QUERY: Requested slug='$slug' with lang='$lang'");
+            // error_log("QUERY: Requested slug='$slug' with lang='$lang'");
 
             $post_types = get_post_types(['public' => true]);
             $original_post = null;
 
             if (get_query_var('pagename')) {
                 $original_post = get_page_by_path($slug, OBJECT, 'page');
-                error_log("QUERY: Searching for page with pagename slug='$slug'");
+                // error_log("QUERY: Searching for page with pagename slug='$slug'");
             }
 
             if (!$original_post) {
                 $original_post = get_page_by_path($slug, OBJECT, $post_types);
-                error_log("QUERY: Searching for post with original_post slug='$slug'");
+                // error_log("QUERY: Searching for post with original_post slug='$slug'");
             }
 
             // this is for matching custom post permalink by taking last part of post
@@ -365,27 +603,27 @@ function activeloc_filter_language_query($query)
                 $segments = explode('/', $slug);
                 $last_slug = end($segments);
                 $original_post = get_page_by_path($last_slug, OBJECT, $post_types);
-                error_log("QUERY: Fallback using last slug segment='$last_slug'");
+                // error_log("QUERY: Fallback using last slug segment='$last_slug'");
             }
 
             if ($original_post) {
-                error_log("QUERY: Found original post ID={$original_post->ID}, type={$original_post->post_type}");
+                // error_log("QUERY: Found original post ID={$original_post->ID}, type={$original_post->post_type}");
 
                 $original_id = get_post_meta($original_post->ID, '_original_post_id', true) ?: $original_post->ID;
-                error_log("QUERY: Original ID resolved to $original_id");
+                // error_log("QUERY: Original ID resolved to $original_id");
 
                 $translations = get_post_meta($original_id, 'activeloc_translations', true);
                 if (!is_array($translations)) {
                     $translations = [];
-                    error_log("QUERY: No translations array found → using empty set");
+                    // error_log("QUERY: No translations array found → using empty set");
                 }
 
                 $translated_id = $translations[$lang] ?? $original_id;
 
                 if ($translated_id == $original_id) {
-                    error_log("QUERY: No translation for '$lang' → falling back to original ($original_id)");
+                    // error_log("QUERY: No translation for '$lang' → falling back to original ($original_id)");
                 } else {
-                    error_log("QUERY: Found translation for '$lang' → $translated_id");
+                    // error_log("QUERY: Found translation for '$lang' → $translated_id");
                 }
 
                 set_query_var('translated_id', $translated_id);
@@ -401,10 +639,10 @@ function activeloc_filter_language_query($query)
                     }
                 }
             } else {
-                error_log("QUERY: No matching original post for slug='$slug'");
+                // error_log("QUERY: No matching original post for slug='$slug'");
             }
         } else {
-            error_log("QUERY: Missing lang or slug → lang='$lang', slug='$slug'");
+            // error_log("QUERY: Missing lang or slug → lang='$lang', slug='$slug'");
         }
     }
 }
@@ -497,6 +735,7 @@ function activeloc_disable_canonical_redirect($redirect_url)
     return $redirect_url;
 }
 add_filter('redirect_canonical', 'activeloc_disable_canonical_redirect');
+
 
 
 function activeloc_prepend_lang_to_permalink($url, $post, $leavename)

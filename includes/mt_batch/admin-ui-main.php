@@ -12,45 +12,7 @@ add_action('admin_enqueue_scripts', function () {
     wp_enqueue_script('select2js', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', ['jquery'], null, true);
 });
 
-add_action('admin_menu', function () {
-    add_menu_page(
-        'ActiveLoc Translator Page',
-        'ActiveLoc Translator',
-        'edit_others_posts',
-        'activeloc-translator',
-        'activeloc_render_translator_page',
-        'dashicons-translation',
-        99
-    );
 
-    add_submenu_page(
-        'activeloc-translator',
-        'MTPE Completed List',
-        'MTPE Completed List',
-        'edit_others_posts',
-        'activeloc-mtpe-list',
-        'activeloc_render_mtpe_list_page'
-    );
-
-    // New Short Code submenu
-    add_submenu_page(
-        'activeloc-translator',
-        'Short Code',
-        'Short Code',
-        'edit_others_posts',
-        'activeloc-short-code',
-        'activeloc_render_short_code_page'
-    );
-
-    add_submenu_page(
-        'activeloc-translator',
-        'Guide and Support',
-        'Guide and Support',
-        'edit_others_posts',
-        'activeloc-guide-support',
-        'activeloc_render_guide_support_page'
-    );
-});
 
 
 add_action('admin_init', 'activeloc_handle_translator_form');
