@@ -8,31 +8,32 @@ function my_loco_custom_page_render()
     $plugins = get_plugins();
 
     // Handle form submission
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['plugin_file'])) {
-        $plugin_file = sanitize_text_field($_POST['plugin_file']);
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['plugin_files'])) {
+        $plugin_files = array_map('sanitize_text_field', $_POST['plugin_files']);
         $input1 = sanitize_text_field($_POST['input1']);
         $input2 = sanitize_text_field($_POST['input2']);
 
-        $plugin_dir = WP_PLUGIN_DIR . '/' . dirname($plugin_file);
+        foreach ($plugin_files as $plugin_file) {
+            $plugin_dir = WP_PLUGIN_DIR . '/' . dirname($plugin_file);
+            $pot_files_root = glob($plugin_dir . '/*.pot');
+            $pot_files_lang = glob($plugin_dir . '/languages/*.pot');
+            $pot_files = array_merge($pot_files_root ?: [], $pot_files_lang ?: []);
 
-        // find .pot files in root and languages folder
-        $pot_files_root = glob($plugin_dir . '/*.pot');
-        $pot_files_lang = glob($plugin_dir . '/languages/*.pot');
-        $pot_files = array_merge($pot_files_root ?: [], $pot_files_lang ?: []);
+            if (!empty($pot_files)) {
+                foreach ($pot_files as $pot_file) {
+                    $langs = array_filter([$input1, $input2]);
+                    $result = upload_file_to_activeloc($pot_file, $langs);
 
-        if (!empty($pot_files)) {
-            foreach ($pot_files as $pot_file) {
-                $langs = array_filter([$input1, $input2]);
-                $result = upload_file_to_activeloc($pot_file, $langs);
-
-                if ($result) {
-                    echo '<div class="notice notice-success"><p>Upload OK: ' . esc_html($result['final_file_name']) . '</p></div>';
-                } else {
-                    echo '<div class="notice notice-error"><p>Upload failed: ' . esc_html(basename($pot_file)) . '</p></div>';
+                    if ($result) {
+                        echo '<div class="notice notice-success"><p>Upload OK: ' . esc_html($result['final_file_name']) . '</p></div>';
+                    } else {
+                        echo '<div class="notice notice-error"><p>Upload failed: ' . esc_html(basename($pot_file)) . '</p></div>';
+                    }
                 }
             }
         }
     }
+
 ?>
     <div class="wrap">
         <h1>Plugins with .pot files</h1>
@@ -55,7 +56,7 @@ function my_loco_custom_page_render()
                     if (!empty($pot_files)) : ?>
                         <li>
                             <label>
-                                <input type="radio" name="plugin_file" value="<?php echo esc_attr($plugin_file); ?>" required>
+                                <input type="checkbox" name="plugin_files[]" value="<?php echo esc_attr($plugin_file); ?>">
                                 <?php echo esc_html($plugin_name); ?>
                             </label>
                         </li>
