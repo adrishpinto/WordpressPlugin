@@ -1,5 +1,5 @@
 <?php
-function my_loco_custom_page_render()
+function loco_mtpe_ui()
 {
     if (! function_exists('get_plugins')) {
         require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -9,34 +9,41 @@ function my_loco_custom_page_render()
 
     // Handle form submission
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['plugin_files'])) {
-        $plugin_files = array_map('sanitize_text_field', $_POST['plugin_files']);
-        $input1 = sanitize_text_field($_POST['input1']);
-        $input2 = sanitize_text_field($_POST['input2']);
+    $plugin_files = array_map('sanitize_text_field', $_POST['plugin_files']);
 
-        foreach ($plugin_files as $plugin_file) {
-            $plugin_dir = WP_PLUGIN_DIR . '/' . dirname($plugin_file);
-            $pot_files_root = glob($plugin_dir . '/*.pot');
-            $pot_files_lang = glob($plugin_dir . '/languages/*.pot');
-            $pot_files = array_merge($pot_files_root ?: [], $pot_files_lang ?: []);
+    // New: handle multi-select target languages
+    $target_langs = isset($_POST['activeloc_target_langs'])
+        ? array_map('sanitize_text_field', (array) $_POST['activeloc_target_langs'])
+        : [];
 
-            if (!empty($pot_files)) {
-                foreach ($pot_files as $pot_file) {
-                    $langs = array_filter([$input1, $input2]);
-                    $result = upload_file_to_activeloc($pot_file, $langs);
+    foreach ($plugin_files as $plugin_file) {
+        $plugin_dir = WP_PLUGIN_DIR . '/' . dirname($plugin_file);
+        $pot_files_root = glob($plugin_dir . '/*.pot');
+        $pot_files_lang = glob($plugin_dir . '/languages/*.pot');
+        $pot_files = array_merge($pot_files_root ?: [], $pot_files_lang ?: []);
 
-                    if ($result) {
-                        echo '<div class="notice notice-success"><p>Upload OK: ' . esc_html($result['final_file_name']) . '</p></div>';
-                    } else {
-                        echo '<div class="notice notice-error"><p>Upload failed: ' . esc_html(basename($pot_file)) . '</p></div>';
-                    }
+        if (!empty($pot_files)) {
+            foreach ($pot_files as $pot_file) {
+                // Pass all selected target languages
+                $result = upload_file_to_activeloc($pot_file, $target_langs);
+
+                if ($result) {
+                    echo '<div class="notice notice-success"><p>Upload OK: ' . esc_html($result['final_file_name']) . '</p></div>';
+                } else {
+                    echo '<div class="notice notice-error"><p>Upload failed: ' . esc_html(basename($pot_file)) . '</p></div>';
                 }
             }
         }
     }
+}
+
 
 ?>
     <div class="wrap">
-        <h1>Plugins with .pot files</h1>
+       <h1>Plugins with templates</h1>
+<p style="color: grey; font-size: 12px; margin-left: 5px; margin-top: 4px; margin-bottom: 8px; line-height: 0;">
+  If your plugin is not in this list, go to Home → select Plugin/Theme and click "Create template"
+</p>
 
         <form method="post">
             <ul>
@@ -68,6 +75,7 @@ function my_loco_custom_page_render()
             <h2>Target Languages</h2>
             <p><input type="text" name="input1" placeholder="e.g. fr"></p>
             <p><input type="text" name="input2" placeholder="e.g. de"></p>
+            <?php lang_dropdown(); ?>
 
             <p><button type="submit" class="button button-primary">Upload</button></p>
         </form>

@@ -65,15 +65,7 @@ add_action('admin_menu', function () {
         'activeloc_render_guide_support_page'
     );
 
-    // String Translator submenu
-    add_submenu_page(
-        'activeloc-translator',
-        'String Translator',
-        'String Translator',
-        'edit_others_posts',
-        'activeloc-string-translator',
-        'activeloc_render_string_translator_page'
-    );
+   
 });
 
 
@@ -290,12 +282,13 @@ $lang_array = [
 
 //loco translate
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/loco-mtpe-ui.php';
+require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/loco-user-guide.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/api_functions/loco_mtpe.php';
 
 add_filter('loco_api_providers', function ($providers) {
     $providers[] = [
         'id'   => 'azure_simple',
-        'name' => 'Azure Wrapper',
+        'name' => 'ActiveLoc Translator',
         'url'  => 'https://your-api-endpoint.com/translate',
         'key'  => 'dummy',
     ];
