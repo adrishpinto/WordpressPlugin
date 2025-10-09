@@ -14,7 +14,6 @@ error_reporting(E_ALL);
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/admin-ui-string.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/api_functions/login_api.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/api_functions/translate.php';
 require_once plugin_dir_path(__FILE__) . 'includes/mt_batch/api_functions/translate_title.php';
@@ -544,25 +543,27 @@ function activeloc_language_rewrite_rules()
 {
     global $lang_array;
 
-    foreach ($lang_array as $lang) {
-        // Hierarchical pages 
-        add_rewrite_rule(
-            $lang . '/(.+)/?$',
-            'index.php?pagename=$matches[1]&lang=' . $lang,
-            'top'
-        );
+    // Ensure $lang_array exists and is an array
+    if (!empty($lang_array) && is_array($lang_array)) {
+        foreach ($lang_array as $lang) {
+            // Hierarchical pages 
+            add_rewrite_rule(
+                $lang . '/(.+)/?$',
+                'index.php?pagename=$matches[1]&lang=' . $lang,
+                'top'
+            );
 
-        // Single posts / custom post types
-        add_rewrite_rule(
-            $lang . '/(.+)/?$',
-            'index.php?name=$matches[1]&lang=' . $lang,
-            'top'
-        );
-
-        // error_log("REWRITE: Added rules for language '$lang'");
+            // Single posts / custom post types
+            add_rewrite_rule(
+                $lang . '/(.+)/?$',
+                'index.php?name=$matches[1]&lang=' . $lang,
+                'top'
+            );
+        }
     }
 }
 add_action('init', 'activeloc_language_rewrite_rules');
+
 
 
 

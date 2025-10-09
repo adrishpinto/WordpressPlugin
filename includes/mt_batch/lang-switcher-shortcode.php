@@ -1,5 +1,4 @@
 <?php
-
 function activeloc_get_supported_languages()
 {
     $url = plugin_dir_url(__FILE__) . 'includes/mt_batch/lang_switcher.js';

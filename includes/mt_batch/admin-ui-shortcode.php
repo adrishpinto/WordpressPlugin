@@ -166,9 +166,7 @@ function activeloc_render_short_code_page()
 [activeloc_lang_switcher background="#333" text_color="#fff" margin="10px 5px"]   <br>
 [activeloc_lang_switcher navbar="true" display="inline-block"]   <br>
 [activeloc_lang_switcher position="absolute" right="50px" top="100px" footer="true"] <br>
-
 </code></pre>
-
             <h3>Available Attributes</h3>
             <table class="widefat striped" style="margin-top:10px;">
                 <thead>

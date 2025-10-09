@@ -36,8 +36,6 @@ function loco_mtpe_ui()
         }
     }
 }
-
-
 ?>
     <div class="wrap">
        <h1>Plugins with templates</h1>
@@ -72,9 +70,7 @@ function loco_mtpe_ui()
             </ul>
 
 
-            <h2>Target Languages</h2>
-            <p><input type="text" name="input1" placeholder="e.g. fr"></p>
-            <p><input type="text" name="input2" placeholder="e.g. de"></p>
+            
             <?php lang_dropdown(); ?>
 
             <p><button type="submit" class="button button-primary">Upload</button></p>
@@ -133,9 +129,6 @@ function loco_mtpe_ui()
             echo '<p>No files found.</p>';
         }
         ?>
-
-
     </div>
-
 <?php
 }

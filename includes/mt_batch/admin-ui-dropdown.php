@@ -1,6 +1,5 @@
 <?php
-function lang_dropdown()
-{
+function lang_dropdown() {
     $languages = get_option('activeloc_languages', []);
     $languages = [
         'af' => 'Afrikaans',
@@ -109,26 +108,28 @@ function lang_dropdown()
         'zu' => 'Zulu',
     ];
 
-?>
-    <p>
+    echo '<p>
         <label for="activeloc_target_langs"><strong>Select Target Languages:</strong></label><br>
-        <select name="activeloc_target_langs[]" id="activeloc_target_langs" multiple="multiple" style="width: 300px;">
-            <?php foreach ($languages as $code => $label): ?>
-                <option value="<?php echo esc_attr($code); ?>"><?php echo esc_html($label); ?></option>
-            <?php endforeach; ?>
-        </select>
-    </p>
+        <select name="activeloc_target_langs[]" id="activeloc_target_langs" multiple="multiple" style="width: 300px;">';
 
+    foreach ($languages as $code => $label) {
+        echo '<option value="' . esc_attr($code) . '">' . esc_html($label) . '</option>';
+    }
+
+    echo '</select></p>
     <script>
         jQuery(document).ready(function($) {
-            $('#activeloc_target_langs').select2({
+            $("#activeloc_target_langs").select2({
                 placeholder: "Choose languages",
-                width: 'resolve'
+                width: "resolve"
             });
         });
-    </script>
-<?php
+    </script>';
 }
+
+
+
+
 
 
 // 'af' => 'Afrikaans',
