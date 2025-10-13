@@ -128,7 +128,7 @@ function mtpe_get_folder_files()
     if (isset($files['error'])) {
         wp_send_json_error(['message' => $files['error']]);
     }
-
+ 
     wp_send_json_success(['files' => $files['files'] ?? []]);
 }
 

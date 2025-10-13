@@ -8,7 +8,7 @@ function translate_and_make_post($post, $target_lang, $replace_if_exists = false
     $translated_content = translate_html_preserving_images($post->post_content, $target_lang);
 
     if (!$translated_title || !$translated_content) {
-        error_log("Translation failed for post ID {$post->ID}");
+        // error_log("Translation failed for post ID {$post->ID}");
         return false;
     }
 
@@ -55,12 +55,31 @@ function translate_and_make_post($post, $target_lang, $replace_if_exists = false
     $new_post_id = wp_insert_post($new_post);
 
     if (is_wp_error($new_post_id)) {
-        error_log("Failed to create translated post for ID {$post->ID}");
+        // error_log("Failed to create translated post for ID {$post->ID}");
         return;
     }
 
     update_post_meta($new_post_id, 'activeloc_lang', $target_lang);
     update_post_meta($new_post_id, '_original_post_id', $post->ID);
+
+    $elementor_metas = [
+        '_elementor_edit_mode',
+        '_elementor_template_type',
+        '_elementor_version',
+        '_elementor_data', // THIS IS ESSENTIAL
+        '_elementor_page_settings' // optional but recommended
+    ];
+
+
+    foreach ($elementor_metas as $meta_key) {
+        $meta_value = get_post_meta($post->ID, $meta_key, true);
+        if (!empty($meta_value)) {
+            update_post_meta($new_post_id, $meta_key, $meta_value);
+            error_log("Copied $meta_key: " . substr(json_encode($meta_value), 0, 200)); // logs first 200 chars
+        } else {
+            error_log("Meta $meta_key is empty for post " . $post->ID);
+        }
+    }
 
     // Ensure slug & title get saved properly
     wp_update_post(['ID' => $new_post_id]);
