@@ -57,6 +57,24 @@ function activeloc_render_translator_page()
             echo "Click on Authorize to access plugin";
         }
 
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // ✅ Put the debug handler here
+            if (isset($_POST['activeloc_debug_meta_submit']) && !empty($_POST['activeloc_post_ids'])) {
+
+                // 🔧 DEBUG START - remove after testing
+                error_log("=== DEBUG META OUTPUT START ===");
+
+                foreach ($_POST['activeloc_post_ids'] as $post_id) {
+                    $meta = get_post_meta($post_id);
+                    error_log("Post ID: {$post_id}");
+                    error_log(print_r($meta, true));
+                }
+
+                error_log("=== DEBUG META OUTPUT END ===");
+                // 🔧 DEBUG END
+            }
+        }
+
 
         if (!empty($activeloc_token)):
             // rest of content is below this 
@@ -154,6 +172,12 @@ function activeloc_render_translator_page()
                 <p>
                     <input type="submit" name="activeloc_translator_submit" class="button button-primary" value="Translate Now">
                     <input type="submit" name="activeloc_mtpe_submit" class="button" value="Upload to MTPE">
+
+                <p>
+                    <!-- 🔧 DEBUG BUTTON - delete after testing -->
+                    <input type="submit" name="activeloc_debug_meta_submit" class="button" value="Debug Metadata">
+                </p>
+
                 </p>
             </form>
 

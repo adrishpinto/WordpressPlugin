@@ -67,7 +67,7 @@ function translate_and_make_post($post, $target_lang, $replace_if_exists = false
         '_elementor_template_type',
         '_elementor_version',
         '_elementor_data', // THIS IS ESSENTIAL
-        '_elementor_page_settings' // optional but recommended
+        '_elementor_page_settings' 
     ];
 
 
@@ -85,13 +85,7 @@ function translate_and_make_post($post, $target_lang, $replace_if_exists = false
     wp_update_post(['ID' => $new_post_id]);
 
     // Log
-    error_log("[ActiveLoc] New translated post created:");
-    error_log("  ID: {$new_post_id}");
-    error_log("  Title: " . get_the_title($new_post_id));
-    error_log("  Slug: " . get_post_field('post_name', $new_post_id));
-    error_log("  Permalink: " . get_permalink($new_post_id));
-    error_log("  Language: {$target_lang}");
-    error_log("  Original Post ID: {$post->ID}");
+
 
     // Assign category for target language
     $uncategorized_id = get_cat_ID('Uncategorized');
