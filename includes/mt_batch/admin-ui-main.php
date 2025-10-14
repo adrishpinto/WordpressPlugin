@@ -58,20 +58,19 @@ function activeloc_render_translator_page()
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // ✅ Put the debug handler here
             if (isset($_POST['activeloc_debug_meta_submit']) && !empty($_POST['activeloc_post_ids'])) {
 
-                // 🔧 DEBUG START - remove after testing
-                error_log("=== DEBUG META OUTPUT START ===");
+                $output = "<div class='debug-meta'><pre>";
 
                 foreach ($_POST['activeloc_post_ids'] as $post_id) {
                     $meta = get_post_meta($post_id);
-                    error_log("Post ID: {$post_id}");
-                    error_log(print_r($meta, true));
+                    $output .= "Post ID: {$post_id}\n";
+                    $output .= print_r($meta, true) . "\n";
                 }
 
-                error_log("=== DEBUG META OUTPUT END ===");
-                // 🔧 DEBUG END
+                $output .= "</pre></div>";
+
+                echo $output; // shows in UI
             }
         }
 
